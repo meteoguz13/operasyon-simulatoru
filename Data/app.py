@@ -186,7 +186,7 @@ def yillik_optimum_ekip(yil, baz_ekip):
 # ---------- Arayüz ----------
 st.title("Operasyonel Yoğunluk ve Verimlilik Simülatörü")
 
-sekme_gun, sekme_yil = st.tabs(["📊 Günlük Simülasyon", "📅 Yıllık Hesap"])
+sekme_gun, sekme_yil, sekme_nasil = st.tabs(["📊 Günlük Simülasyon", "📅 Yıllık Hesap", "📖 Nasıl Çalışır?"])
 
 # ===== GÜNLÜK SEKME =====
 with sekme_gun:
@@ -320,3 +320,111 @@ with sekme_yil:
         b2.metric("Ortalama SLA", f"%{osla*100:.1f}")
         b3.metric("Hedef durumu", "✅ Üstünde" if osla >= 0.90 else "⚠️ Altında")
         st.caption(f"{gs} iş günü · {ye} aktif kişi · %{int(yy*100)} yönlendirme")
+
+# ===== NASIL ÇALIŞIR SEKMESİ =====
+with sekme_nasil:
+    st.subheader("📖 Bu Uygulama Nasıl Çalışır?")
+    st.markdown(
+        "Bu sayfa, uygulamanın arkasındaki tüm mantığı sade bir dille anlatır. "
+        "Hiçbir şey kara kutu değil — her sayının nereden geldiğini burada görebilirsiniz."
+    )
+
+    with st.expander("1️⃣ Veri — Neye bakıyoruz?", expanded=True):
+        st.markdown("""
+**Sentetik (yapay) bir veri seti** kullanılıyor: 7/24 çalışan bir operasyon merkezini temsil eden ~1.4 milyon işlem.
+Gerçek veri gizlilik nedeniyle kullanılamadığı için, gerçek hayattaki davranışlar veriye bilinçli olarak yerleştirildi:
+
+- Haftanın günlerine göre değişen yoğunluk (hafta içi yoğun, Pazar sakin)
+- Ay sonu yığılmaları
+- Resmi tatil öncesi iş patlamaları
+- Personel devamsızlığı (izin/rapor)
+
+İşlem kayıtları gün bazında özetlenir: her gün için toplam hacim, işbaşı yapan kişi sayısı, takvim özellikleri.
+        """)
+
+    with st.expander("2️⃣ Tahmin — Yarın kaç işlem gelecek?"):
+        st.markdown("""
+Bir makine öğrenmesi modeli (RandomForest), geçmiş veriden **takvim paternlerini** öğrenir:
+hangi gün, hangi ay, tatil öncesi mi, ay sonu mu, arife mi.
+
+**Önemli bir tasarım kararı:** Model "kaç işlem gelecek?" diye değil,
+**"normale göre kaç kat işlem gelecek?"** diye tahmin yapar.
+
+Neden? Çünkü işlem hacmi yıldan yıla büyüyor. Ham sayıyı tahmin eden model bu büyümeye ayak uyduramıyordu.
+Oran (kat sayısı) ise yıldan bağımsız: "Pazartesiler normalin 1.2 katıdır" bilgisi her yıl geçerli.
+Tahmin edilen oran, güncel hacim seviyesiyle çarpılınca gerçekçi bir sayı çıkar.
+
+Bu değişiklik tahmin hatasını **yarıya indirdi** ve modeli basit yöntemlerden
+(geçen haftanın aynı günü gibi) **%50 daha isabetli** yaptı.
+        """)
+
+    with st.expander("3️⃣ SLA — Zamanında bitirme oranı nasıl hesaplanıyor?"):
+        st.markdown("""
+**SLA**, işlerin hedef sürede bitme oranıdır (örn. %90 = işlerin %90'ı zamanında bitti).
+
+Buradaki temel mantık basit: **kişi başına düşen iş arttıkça, zamanında bitirme oranı düşer.**
+
+Geçmiş veriden bu ilişki ölçüldü: kişi başı yük ile SLA arasında doğrusal bir bağ var.
+Uygulama bu ilişkiyi kullanır — ekip küçülür ya da iş artarsa SLA'nın ne kadar düşeceğini hesaplar.
+
+Yük seviyeleri için eşikler:
+- 🟢 **Normal:** kişi başı ~34 işlemin altı
+- 🟡 **Dikkat:** ~34-41 arası
+- 🔴 **Kritik:** ~41 üzeri
+        """)
+
+    with st.expander("4️⃣ Yönlendirme — Hangi işler başka güne kayabilir?"):
+        st.markdown("""
+Her iş aynı aciliyette değildir. Müşteriler, geçmiş davranışlarına göre **esneklik gruplarına** ayrıldı:
+
+- **Esnek:** İşlemleri farklı günlere yayılmış müşteriler — işleri kaydırılabilir
+- **Orta:** Kısmen esnek — işlerinin yarısı kaydırılabilir kabul edilir
+- **Esnek Değil:** Hep aynı gün, düzenli çalışan (çoğunlukla kurumsal) müşteriler — işlerinin yalnızca küçük bir kısmı (%10) kaydırılabilir
+
+Bu gruplardan, her günün **"yönlendirilebilir iş"** miktarı hesaplanır.
+Simülatördeki "yönlendirme oranı" kaydırıcısı, bu kaydırılabilir işin ne kadarının
+başka güne taşındığını temsil eder. Üst sınır %50 — daha fazlası gerçekçi değil.
+        """)
+
+    with st.expander("5️⃣ Optimum — 'En iyi ayar' nasıl bulunuyor?"):
+        st.markdown("""
+"Optimum" derken keyfi bir puanlama yok. Mantık sırayla şöyle:
+
+1. **SLA ≥ %90 hedefini tutturan** kombinasyonlar aranır
+2. Tutanlar arasında **önce en az kişi**, sonra **en az yönlendirme** tercih edilir
+3. Hiçbir kombinasyon hedefi tutturamıyorsa, **en yüksek SLA'yı veren** gösterilir (ve dürüstçe "hedefe ulaşılamıyor" denir)
+
+İki önemli kural:
+- **Günlük optimum, mevcut ekip sayısını aşamaz** — çünkü bir güne kadro eklenemez; kadro kararı yıllık planlamanın işidir
+- **Yönlendirme %30 ile sınırlı** — aşırı yönlendirme pratikte uygulanamaz
+
+Bazı günlerde sistem "hiçbir önlem yetmiyor" der. Bu bir hata değil, **dürüst bir bulgudur**:
+o gün normal kapasiteyle hedef tutturulamaz, ek önlem gerekir.
+        """)
+
+    with st.expander("6️⃣ Yıllık Planlama — Kadro ihtiyacı nasıl hesaplanıyor?"):
+        st.markdown("""
+Yıllık hesap, seçilen yılın **her iş gününü tek tek simüle eder**:
+her gün için hacim tahmini yapılır, seçilen ekip ve yönlendirmeyle SLA hesaplanır, yıl ortalaması alınır.
+
+**"Optimum kadro"** ise şu sorunun cevabıdır:
+*"Yıl genelinde ortalama SLA ≥ %90 olsun diye en az kaç kişi gerekir?"*
+Sistem, mevcut ekipten başlayarak kadroyu birer birer artırıp dener; hedefi tutturan ilk (en küçük) kadroyu önerir.
+
+**Bilinçli bir sınır:** Uzak gelecek tahminlerinde hacim seviyesi sabit kabul edilir
+(verinin son dönem ortalaması). Gerçek hayatta hacim büyür; canlı bir sistemde bu seviye
+her gün güncellenir ve büyüme otomatik yakalanır.
+        """)
+
+    with st.expander("7️⃣ Bu modele neden güvenelim?"):
+        st.markdown("""
+Üç doğrulama yapıldı:
+
+- **Basit yöntemlerle kıyas:** Model, "geçen haftanın aynı günü" gibi basit tahminlerden **%50 daha isabetli**
+- **Hata analizi:** Modelin nerede zayıf olduğu biliniyor — nadir uç günlerde (tatil öncesi) hata artar; bu kabul edilen bir sınırdır
+- **Güven aralığı:** Model tek sayı değil, aralık da verir — normal günlerde dar (emin), oynak günlerde geniş (belirsizliğini bilir)
+
+**Dürüst not:** Veri sentetik olduğu için buradaki başarı oranları gerçek veride farklılık gösterebilir.
+Bu uygulamanın amacı kesin rakam vermek değil, **yaklaşımı ve yöntemi göstermektir**:
+önce ölç, sonra tahmin et, senaryoyu test et, en son karar ver.
+        """)
