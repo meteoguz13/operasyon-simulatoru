@@ -1,5 +1,7 @@
 # Operasyonel Yoğunluk Tahmin ve Verimlilik Simülatörü
 
+🔴 **Canlı Demo:** [operasyon-simulatoru.streamlit.app](https://operasyon-simulatoru.streamlit.app)
+
 Operasyon merkezlerinde günlük iş yoğunluğunu önceden tahmin eden ve "ya şöyle yapsaydık?" sorusunu veriyle yanıtlayan bir karar destek aracı.
 
 > **Not:** Bu bir portföy projesidir. Gerçek kurumsal veri gizlilik nedeniyle kullanılamayacağı için, gerçek operasyonel paternleri taklit eden **sentetik bir veri seti** üretilmiştir. Finansal parametreler varsayımdır; amaç yöntemi ve yaklaşımı göstermektir.
