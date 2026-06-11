@@ -1,3 +1,5 @@
-import os
-BASE = os.path.dirname(__file__)
-g = pd.read_csv(os.path.join(BASE, "gunluk_ozet.csv"), encoding="utf-8-sig")
+pandas
+numpy
+scikit-learn
+streamlit
+matplotlib
