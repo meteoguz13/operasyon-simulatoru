@@ -223,7 +223,7 @@ with sekme_gun:
 
         st.markdown("##### Operasyonel Sonuç")
         m1, m2 = st.columns(2)
-        m1.metric("Kişi başı yük(İşlem Adedi)", f"{s_yuk:.1f}", f"{s_yuk - b_yuk:.1f}")
+        m1.metric("Kişi başı yük(İşlem Adedi)", f"{s_yuk:.1f}", f"{s_yuk - b_yuk:.1f}", delta_color="inverse")
         m2.metric("SLA (hedefte biten)", f"%{s_sla*100:.1f}", f"%{(s_sla - b_sla)*100:.1f} puan")
         m3, m4 = st.columns(2)
         m3.metric("Müdahale etkisi", f"{ek_islem:+.0f} işlem",
