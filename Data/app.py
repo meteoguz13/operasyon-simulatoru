@@ -36,6 +36,7 @@ def hazirla():
     BASE = os.path.dirname(__file__)
     g = pd.read_csv(os.path.join(BASE, "gunluk_ozet.csv"), encoding="utf-8-sig")
     g["baslama_tarihi"] = pd.to_datetime(g["baslama_tarihi"])
+
     g = g.sort_values("baslama_tarihi").reset_index(drop=True)
     g["ma_14"] = g["gunluk_hacim"].shift(1).rolling(14).mean()
     g = g.dropna().reset_index(drop=True)
